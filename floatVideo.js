@@ -253,7 +253,6 @@ $(document).ready(function() {
                 {
                     return false;
                 }
-                console.log(e.target.className);
                 toggleVideo();
             }
             return false;
@@ -371,7 +370,7 @@ $(document).ready(function() {
         // Show settings saved alert
         $settingsSavedAlert = $('<div style="width: 100%">\
                                     <div class="alert alert-success" role="alert">\
-                                        <img src="https://raw.githubusercontent.com/jianweichuah/miniyoutube/master/icon16.png" height="10px">\
+                                        <img src="https://raw.githubusercontent.com/jianweichuah/minifacebook/master/icon16.png" height="10px">\
                                         Mini Facebook: Screen settings saved!\
                                     </div>\
                                  </div>');
