@@ -8,6 +8,7 @@ var LARGE_HEIGHT = 360;
 var EXTRA_LARGE_WIDTH = 854;
 var EXTRA_LARGE_HEIGHT = 480;
 var MINIFACEBOOK_VIDEO_ID = 'mnfb-video';
+var LONG_PRESS = 100;
 
 var checkedVideos = {};
 var mnfbBtnId = 1;
@@ -24,6 +25,8 @@ var miniScreenLastWidth;
 var dragStartX, dragStartY, dragStartWidth, dragStartHeight, dragRatio;
 var maxWidth = 854;
 var minWidth = 310;
+var resizing = false;
+var start;
 
 $(document).ready(function() {
     // Preload images
@@ -44,7 +47,8 @@ $(document).ready(function() {
                 // If the clicked div is resizer, don't make it draggable.
                 if(e.target.className === "resizer" || 
                    e.target.className === "mnfb-size-button" || 
-                   e.target.className === "mnfb-pin-img") {
+                   e.target.className === "mnfb-pin-img" ||
+                   e.target.className === "mnfb-progress-area") {
                     return false;
                 }
 
@@ -92,20 +96,34 @@ $(document).ready(function() {
 
     // While scrolling, collect all the video elements
     $(window).scroll(function() {
+        // Get all the videos.
         var videos = document.getElementsByTagName("video");
         // Loop through each video and add button into it if doesn't already exist
         for (i = 0; i < videos.length; i++) {
             var currVideo = $(videos[i]);
             if (!checkedVideos[currVideo.attr('id')] && currVideo.attr('id') !== MINIFACEBOOK_VIDEO_ID) {
-                // Alert: hacky solution
+                // 1. Create mini facebook button
                 var mnfbBtn = $('<div class="mnfb-btn">Play in Mini Facebook</div>');
+                // 2. Add id to the button
                 var currBtnId = 'mnfb-id-' + mnfbBtnId;
                 mnfbBtn.attr('id', currBtnId);
+                // 3. Attach the button to the video
                 currVideo.after(mnfbBtn);
-                console.log(currVideo.attr('id'));
+                // 4. Add listeners
                 $('#' + currBtnId).click(floatVideo);
-                // Add this video to the hashmap
+                currVideo.on('mouseover', function(e) {
+                    $('#' + currBtnId).show();
+                });
+
+                currVideo.on('mouseleave', function(e) {
+                    if (e.toElement.className === "mnfb-btn") {
+                        return false;
+                    }
+                    $('#' + currBtnId).hide();
+                });
+                // 5. Add this video to the hashmap
                 checkedVideos[currVideo.attr('id')] = true;
+                // 6. Increment id
                 mnfbBtnId += 1;
             }
         }
@@ -123,8 +141,39 @@ $(document).ready(function() {
         originalVideo.pause();
         // 3. Create the mini facebook div
         $miniScreen = $('<div id="minifacebook"></div');
+        // Put the screen back to its last position, if defined.
+        // Else default to top right.
+        var miniScreenTop = 55;
+        var miniScreenHeight = 175;
+        var miniScreenLeft = $(window).width() - 380;
+        var miniScreenWidth = 310;
+
+        if (miniScreenLastTop && miniScreenLastHeight && 
+            miniScreenLastLeft && miniScreenLastWidth &&
+            miniScreenLastLeft + miniScreenLastWidth <= $(window).width() &&
+            miniScreenLastTop + miniScreenLastHeight <= $(window).height()) {
+
+            miniScreenTop = miniScreenLastTop;
+            miniScreenHeight = miniScreenLastHeight;
+            miniScreenLeft = miniScreenLastLeft;
+            miniScreenWidth = miniScreenLastWidth;
+        }
+
+        $miniScreen.css('top', miniScreenTop);
+        $miniScreen.css('left', miniScreenLeft);
+        $miniScreen.height(miniScreenHeight);
+        $miniScreen.width(miniScreenWidth);
+
         // 4. Create a video tag with the video url
         $newVideo = $('<video>', {src: originalVideo.src, id: MINIFACEBOOK_VIDEO_ID});
+
+        // Set the width and height of the video to fit the div
+        $newVideo.css('width', miniScreenWidth);
+        $newVideo.css('height', miniScreenHeight);
+
+        // Bind the time update event to the video
+        $newVideo.bind('timeupdate', updateTime);
+
         // 5. Append the video into the mini facebook div
         $miniScreen.append($newVideo);
         // 6. Append everything into the body tag
@@ -144,6 +193,8 @@ $(document).ready(function() {
     function addVideoControls() {
         // Add resizers to the right corners of the div
         $('#minifacebook').append('<div>\
+                                        <div class="resizer" id="mnfb-br"></div>\
+                                        <img class="resize-icon" src="https://raw.githubusercontent.com/jianweichuah/miniyoutube/master/brCorner.png" />\
                                         <div class="mnfb-control-icons">\
                                             <button class="mnfb-size-button" id="mnfb-pin-button"><img class="mnfb-pin-img" src="https://raw.githubusercontent.com/jianweichuah/miniyoutube/master/images/pin.png" width="20px"/></button>\
                                             <label class="mnfb-pin-label">Save screen settings.</label>\
@@ -153,8 +204,11 @@ $(document).ready(function() {
                                             <button class="mnfb-size-button" id="mnfb-extra-large-button">XL</button>\
                                         </div>\
                                         <button class="mnfb-size-button" id="mnfb-close-button">X</button>\
-                                        <div class="mnfb-progress-wrap mnfb-progress">\
-                                            <div class="mnfb-progress-bar mnfb-progress"></div>\
+                                        <div class="mnfb-progress-area">\
+                                            <div class="mnfb-progress-wrap mnfb-progress">\
+                                                <div class="mnfb-progress-bar mnfb-progress"></div>\
+                                            </div>\
+                                            <div class="mnfb-progress-pointer"></div>\
                                         </div>\
                                   </div>');
 
@@ -166,9 +220,45 @@ $(document).ready(function() {
         // Save the position and size of the screen if pin button is clicked
         $('#mnfb-pin-button').click(pinButtonClicked);
         $('#mnfb-close-button').click(closeButtonClicked);
+        // Add listener for the resizers
+        $('.resizer').bind('mousedown.resizer', initResize);
+        $('.resize-icon').bind('mousedown.resizer', initResize);
+        // Add listener for the progress bar
+        $('.mnfb-progress-area').hover(handleProgressHoverIn, handleProgressHoverOut);
+        $('.mnfb-progress-area').click(handleVideoProgress);
     }
 
     function addListeners() {
+        // Modify clicking to differentiate long vs short clicks.
+        // Long click -> dragging. Short click -> pause/play
+        $('#minifacebook').on('mousedown', function(e) {
+            start = new Date().getTime();
+        });
+
+        $('#minifacebook').on('mouseup', function(e) {
+            // If resizing, stop it
+            if (resizing == true) {
+                stopResize(e);
+                return false;
+            }
+
+            if (new Date().getTime() < (start + LONG_PRESS)) {
+                // If the click is on the controls, don't pause
+                if (e.target.className === "mnfb-size-button" ||
+                    e.target.className === "mnfb-pin-img" ||
+                    e.target.className === "mnfb-progress-area" ||
+                    e.target.className === "mnfb-progress-wrap mnfb-progress" ||
+                    e.target.className === "mnfb-progress-bar mnfb-progress" ||
+                    e.target.className === "mnfb-progress-pointer")
+                {
+                    return false;
+                }
+                console.log(e.target.className);
+                toggleVideo();
+            }
+            return false;
+        });
+
         $('#minifacebook').on('mouseover', function(e) {
             $('.mnfb-control-icons').show();
             $('#mnfb-close-button').show();
@@ -179,18 +269,88 @@ $(document).ready(function() {
             $('#mnfb-close-button').hide();
         });
 
-        $('#miniyoutube').click(function() {
-            // If the click is on the controls, don't pause
-            if (e.target.className === "mnfb-size-button" || e.target.className === "mnfb-pin-img") {
-                return false;
-            }
-            toggleVideo();
+        $('#minifacebook').click(function() {
+            return false;
         });
 
         // Disable double click to full screen.
-        $('#miniyoutube').dblclick(function() {
+        $('#minifacebook').dblclick(function() {
             return false;
         });
+    }
+
+    function handleProgressHoverIn() {
+        $('.mnfb-progress-wrap').height(5);
+        $('.mnfb-progress-bar').height(5);
+        $('.mnfb-progress-pointer').show();
+    }
+
+    function handleProgressHoverOut() {
+        $('.mnfb-progress-wrap').height(1);
+        $('.mnfb-progress-bar').height(1);
+        $('.mnfb-progress-pointer').hide();
+    }
+
+    function handleVideoProgress(e) {
+        var clickedPositionX = e.offsetX;
+        var totalWidth = $('.mnfb-progress-area').width();
+        if (e.target.className === "mnfb-progress-bar mnfb-progress") {
+            clickedPositionX = clickedPositionX + $('.mnfb-progress-bar').position().left;
+        }
+        var percent = clickedPositionX/totalWidth;
+        var video = $('#mnfb-video').get(0);
+        video.currentTime = percent * video.duration;
+        updateTime();
+    }
+
+    function initResize(e) {
+        resizing = true;
+        // Store the initial values to calculate new size later
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        dragStartWidth = $('#minifacebook').width();
+        dragStartHeight = $('#minifacebook').height();
+        dragRatio = dragStartHeight/dragStartWidth;
+        // Add event listeners to perform resize
+        $(window).mousemove(doResize);
+        $(window).mouseup(stopResize);
+        e.preventDefault();
+
+        return false;
+    }
+
+    function doResize(e) {
+        // if not resizing, do nothing
+        if (resizing == false) {
+            return false;
+        }
+
+        var newWidth = dragStartWidth + e.clientX - dragStartX;
+        // Make sure the new width does not exceed the max width
+        if (newWidth > maxWidth) {
+            newWidth = maxWidth;
+        }
+        if (newWidth < minWidth) {
+            newWidth = minWidth;
+        }
+
+        var newHeight = Math.round(newWidth * dragRatio);
+        $('#minifacebook').width(newWidth);
+        $('#minifacebook').height(newHeight);
+        // Added to also resize the video after the YouTube update
+        $('#mnfb-video').width(newWidth);
+        $('#mnfb-video').height(newHeight);
+        e.preventDefault();
+
+        return false;
+    }
+
+    function stopResize(e) {
+        // Set the flag to false
+        resizing = false;
+        // Remove the listensers
+        $(window).unbind('mousemove');
+        return false;
     }
 
     function toggleVideo() {
@@ -201,25 +361,38 @@ $(document).ready(function() {
             $vid.pause();
     }
 
-    function pinButtonClicked() {
-        // saveMiniYouTubeSettings();
-        // // Show settings saved alert
-        // $settingsSavedAlert = $('<div style="width: 100%">\
-        //                             <div class="alert alert-success" role="alert">\
-        //                                 <img src="https://raw.githubusercontent.com/jianweichuah/miniyoutube/master/icon16.png" height="10px">\
-        //                                 Mini YouTube: Screen settings saved!\
-        //                             </div>\
-        //                          </div>');
-        // $('body').prepend($settingsSavedAlert);
-        // // Show it for 5 seconds, fade it out and remove it.
-        // $settingsSavedAlert.show().delay(1000).fadeOut(100, function() {
-        //     $(this).remove();
-        // });
-    }
-
     function closeButtonClicked() {
         $('#minifacebook').remove();
         floated = false;
+    }
+
+    function pinButtonClicked() {
+        saveMiniFacebookSettings();
+        // Show settings saved alert
+        $settingsSavedAlert = $('<div style="width: 100%">\
+                                    <div class="alert alert-success" role="alert">\
+                                        <img src="https://raw.githubusercontent.com/jianweichuah/miniyoutube/master/icon16.png" height="10px">\
+                                        Mini Facebook: Screen settings saved!\
+                                    </div>\
+                                 </div>');
+        $('body').prepend($settingsSavedAlert);
+        // Show it for 5 seconds, fade it out and remove it.
+        $settingsSavedAlert.show().delay(1000).fadeOut(100, function() {
+            $(this).remove();
+        });
+    }
+
+    function saveMiniFacebookSettings() {
+        // Save screen position and size
+        miniScreenLastTop = $('#minifacebook').position().top;
+        miniScreenLastLeft = $('#minifacebook').position().left;
+        miniScreenLastHeight = $('#minifacebook').height();
+        miniScreenLastWidth = $('#minifacebook').width();
+        // Persist to browser storage
+        chrome.storage.sync.set({'miniScreenLastTop': miniScreenLastTop,
+                                 'miniScreenLastLeft': miniScreenLastLeft,
+                                 'miniScreenLastHeight': miniScreenLastHeight,
+                                 'miniScreenLastWidth': miniScreenLastWidth});
     }
 
     // Update the size of the screen to small
@@ -238,6 +411,27 @@ $(document).ready(function() {
     function handleTransitionExtraLarge() {
         resizeScreen(EXTRA_LARGE_WIDTH, EXTRA_LARGE_HEIGHT);
     }
+
+    function updateTime() {
+        // If video is not floated, do nothing.
+        if (floated == false) {
+            return false;
+        }
+        // Get the video player and calculate the progress
+        $video = $('#mnfb-video').get(0);
+
+        var percent = $video.currentTime/$video.duration;
+        var progressBarWidth = $('#minifacebook').width();
+        var progressTotal = percent * progressBarWidth;
+
+        $('.mnfb-progress-bar').stop().animate({
+            left: progressTotal
+        });
+        $('.mnfb-progress-pointer').stop().animate({
+            left: progressTotal - 5
+        });
+    }
+
 
     function resizeScreen(newWidth, newHeight) {
         if ($('#minifacebook').width() == newWidth) {
