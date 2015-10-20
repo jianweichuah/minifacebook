@@ -48,7 +48,10 @@ $(document).ready(function() {
                 if(e.target.className === "resizer" || 
                    e.target.className === "mnfb-size-button" || 
                    e.target.className === "mnfb-pin-img" ||
-                   e.target.className === "mnfb-progress-area") {
+                   e.target.className === "mnfb-progress-area" ||
+                   e.target.className === "mnfb-progress-wrap mnfb-progress" ||
+                   e.target.className === "mnfb-progress-bar mnfb-progress" ||
+                   e.target.className === "mnfb-progress-pointer") {
                     return false;
                 }
 
@@ -293,7 +296,8 @@ $(document).ready(function() {
     function handleVideoProgress(e) {
         var clickedPositionX = e.offsetX;
         var totalWidth = $('.mnfb-progress-area').width();
-        if (e.target.className === "mnfb-progress-bar mnfb-progress") {
+        if (e.target.className === "mnfb-progress-bar mnfb-progress" ||
+            e.target.className === "mnfb-progress-pointer") {
             clickedPositionX = clickedPositionX + $('.mnfb-progress-bar').position().left;
         }
         var percent = clickedPositionX/totalWidth;
