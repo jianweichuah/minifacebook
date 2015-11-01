@@ -32,6 +32,9 @@ $(document).ready(function() {
     // Preload images
     preloadImage("https://raw.githubusercontent.com/jianweichuah/miniyoutube/master/images/pin.png");
 
+    var $window = $(window);
+    var $document = $(document);
+
     (function($) {
         $.fn.drags = function(opt) {
 
@@ -62,23 +65,24 @@ $(document).ready(function() {
                     drg_w = $drag.outerWidth(),
                     pos_y = $drag.offset().top + drg_h - e.pageY,
                     pos_x = $drag.offset().left + drg_w - e.pageX;
+
                 $drag.css('z-index', 1000);
 
-                $(window).on("mousemove", function(e) {
+                $window.on("mousemove", function(e) {
                     // Prevent going out of screen horizontally.
                     var left = e.pageX + pos_x - drg_w;
                     if (left < 5) {
                         left = 5;
-                    } else if (left > $(window).width() - drg_w - 5) {
-                        left = $(window).width() - drg_w - 5;
+                    } else if (left > $window.width() - drg_w - 5) {
+                        left = $window.width() - drg_w - 5;
                     }
 
                     // Prevent going out of screen vertically.
                     var top = e.pageY + pos_y - drg_h;
-                    if (top < $(document).scrollTop() + 5) {
-                        top = $(document).scrollTop() + 5;
-                    } else if (top > $(document).scrollTop() + $(window).height() - drg_h - 5) {
-                        top = $(document).scrollTop() + $(window).height() - drg_h - 5;
+                    if (top < $document.scrollTop() + 5) {
+                        top = $document.scrollTop() + 5;
+                    } else if (top > $document.scrollTop() + $window.height() - drg_h - 5) {
+                        top = $document.scrollTop() + $window.height() - drg_h - 5;
                     }
 
                     $('.draggable').offset({
@@ -88,7 +92,7 @@ $(document).ready(function() {
                         $(this).removeClass('draggable').css('z-index', z_idx);
                     });
                 }).on("mouseup", function() {
-                    $(window).unbind('mousemove');
+                    $window.unbind('mousemove');
                     $(this).removeClass('draggable');
                 });
 
@@ -98,34 +102,35 @@ $(document).ready(function() {
     })(jQuery);
 
     // While scrolling, collect all the video elements
-    $(window).scroll(function() {
+    $window.scroll(function() {
         // Get all the videos.
         var videos = document.getElementsByTagName("video");
+        var $currVideo;
         // Loop through each video and add button into it if doesn't already exist
         for (i = 0; i < videos.length; i++) {
-            var currVideo = $(videos[i]);
-            if (!checkedVideos[currVideo.attr('id')] && currVideo.attr('id') !== MINIFACEBOOK_VIDEO_ID) {
+            $currVideo = $(videos[i]);
+            if (!checkedVideos[$currVideo.attr('id')] && $currVideo.attr('id') !== MINIFACEBOOK_VIDEO_ID) {
                 // 1. Create mini facebook button
                 var mnfbBtn = $('<div class="mnfb-btn">Play in Mini Facebook</div>');
                 // 2. Add id to the button
                 var currBtnId = 'mnfb-id-' + mnfbBtnId;
                 mnfbBtn.attr('id', currBtnId);
                 // 3. Attach the button to the video
-                currVideo.after(mnfbBtn);
+                $currVideo.after(mnfbBtn);
                 // 4. Add listeners
                 $('#' + currBtnId).click(floatVideo);
-                currVideo.on('mouseover', function(e) {
+                $currVideo.on('mouseover', function(e) {
                     $('#' + currBtnId).show();
                 });
 
-                currVideo.on('mouseleave', function(e) {
+                $currVideo.on('mouseleave', function(e) {
                     if (e.toElement.className === "mnfb-btn") {
                         return false;
                     }
                     $('#' + currBtnId).hide();
                 });
                 // 5. Add this video to the hashmap
-                checkedVideos[currVideo.attr('id')] = true;
+                checkedVideos[$currVideo.attr('id')] = true;
                 // 6. Increment id
                 mnfbBtnId += 1;
             }
@@ -134,7 +139,7 @@ $(document).ready(function() {
 
     function floatVideo(event) {
         // If there is already a video, do nothing
-        if (floated == true) {
+        if (floated) {
             return false;
         }
         var clickedButton = event.target;
@@ -143,18 +148,18 @@ $(document).ready(function() {
         // 2. Pause the main video
         originalVideo.pause();
         // 3. Create the mini facebook div
-        $miniScreen = $('<div id="minifacebook"></div');
+        var $miniScreen = $('<div id="minifacebook"></div');
         // Put the screen back to its last position, if defined.
         // Else default to top right.
         var miniScreenTop = 55;
         var miniScreenHeight = 175;
-        var miniScreenLeft = $(window).width() - 380;
+        var miniScreenLeft = $window.width() - 380;
         var miniScreenWidth = 310;
 
         if (miniScreenLastTop && miniScreenLastHeight && 
             miniScreenLastLeft && miniScreenLastWidth &&
-            miniScreenLastLeft + miniScreenLastWidth <= $(window).width() &&
-            miniScreenLastTop + miniScreenLastHeight <= $(window).height()) {
+            miniScreenLastLeft + miniScreenLastWidth <= $window.width() &&
+            miniScreenLastTop + miniScreenLastHeight <= $window.height()) {
 
             miniScreenTop = miniScreenLastTop;
             miniScreenHeight = miniScreenLastHeight;
@@ -188,7 +193,7 @@ $(document).ready(function() {
         // 9. Play the video
         $('#mnfb-video').get(0).play();
         // 10. Make minifacebook draggable
-        $('#minifacebook').drags();
+        $miniScreen.drags();
         // 11. Set floated to true
         floated = true;
     }
@@ -240,7 +245,7 @@ $(document).ready(function() {
 
         $('#minifacebook').on('mouseup', function(e) {
             // If resizing, stop it
-            if (resizing == true) {
+            if (resizing) {
                 stopResize(e);
                 return false;
             }
@@ -315,8 +320,9 @@ $(document).ready(function() {
         dragStartHeight = $('#minifacebook').height();
         dragRatio = dragStartHeight/dragStartWidth;
         // Add event listeners to perform resize
-        $(window).mousemove(doResize);
-        $(window).mouseup(stopResize);
+        $window.mousemove(doResize)
+            .mouseup(stopResize);
+
         e.preventDefault();
 
         return false;
@@ -324,7 +330,7 @@ $(document).ready(function() {
 
     function doResize(e) {
         // if not resizing, do nothing
-        if (resizing == false) {
+        if (!resizing) {
             return false;
         }
 
@@ -338,11 +344,12 @@ $(document).ready(function() {
         }
 
         var newHeight = Math.round(newWidth * dragRatio);
-        $('#minifacebook').width(newWidth);
-        $('#minifacebook').height(newHeight);
+        $('#minifacebook').width(newWidth)
+            .height(newHeight);
         // Added to also resize the video after the YouTube update
-        $('#mnfb-video').width(newWidth);
-        $('#mnfb-video').height(newHeight);
+        $('#mnfb-video').width(newWidth)
+            .height(newHeight);
+
         e.preventDefault();
 
         return false;
@@ -352,7 +359,7 @@ $(document).ready(function() {
         // Set the flag to false
         resizing = false;
         // Remove the listensers
-        $(window).unbind('mousemove');
+        $window.unbind('mousemove');
         return false;
     }
 
@@ -417,7 +424,7 @@ $(document).ready(function() {
 
     function updateTime() {
         // If video is not floated, do nothing.
-        if (floated == false) {
+        if (!floated) {
             return false;
         }
         // Get the video player and calculate the progress
