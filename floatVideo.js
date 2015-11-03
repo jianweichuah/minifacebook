@@ -31,6 +31,9 @@ var start;
 $(document).ready(function() {
     // Preload images
     preloadImage("https://raw.githubusercontent.com/jianweichuah/miniyoutube/master/images/pin.png");
+    
+    var $window = $(window);
+    var $document = $(document);
 
     var $window = $(window);
     var $document = $(document);
