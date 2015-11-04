@@ -114,7 +114,7 @@ $(document).ready(function() {
             $currVideo = $(videos[i]);
             if (!checkedVideos[$currVideo.attr('id')] && $currVideo.attr('id') !== MINIFACEBOOK_VIDEO_ID) {
                 // 1. Create mini facebook button
-                var mnfbBtn = $('<div class="mnfb-btn">Play in Mini Facebook</div>');
+                var mnfbBtn = $('<div class="mnfb-btn">Mini Facebook</div>');
                 // 2. Add id to the button
                 var currBtnId = 'mnfb-id-' + mnfbBtnId;
                 mnfbBtn.attr('id', currBtnId);
