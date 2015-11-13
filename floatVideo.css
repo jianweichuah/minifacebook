@@ -28,7 +28,7 @@
 }
 
 .mnfb-progress-wrap {
-  background: #cc181e;
+  background: #3b5998;
   overflow: hidden;
   position: absolute;
   bottom: 5px;
@@ -49,7 +49,7 @@
   border-radius: 50%;
   width: 10px;
   height: 10px;
-  background: #cc181e;
+  background: #3b5998;
   display: none;
   z-index: 1002;
 }
@@ -151,7 +151,7 @@
 }
 
 .mnfb-size-button:hover {
-  background-color: #cc181e;
+  background-color: #3b5998;
 }
 
 .mnfb-pin-label {

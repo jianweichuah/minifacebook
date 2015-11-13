@@ -9,6 +9,11 @@ var EXTRA_LARGE_WIDTH = 854;
 var EXTRA_LARGE_HEIGHT = 480;
 var MINIFACEBOOK_VIDEO_ID = 'mnfb-video';
 var LONG_PRESS = 100;
+// A list of constants
+var MINI_SCREEN_LAST_TOP = 'miniScreenLastTop';
+var MINI_SCREEN_LAST_LEFT = 'miniScreenLastLeft';
+var MINI_SCREEN_LAST_HEIGHT = 'miniScreenLastHeight';
+var MINI_SCREEN_LAST_WIDTH = 'miniScreenLastWidth';
 
 var checkedVideos = {};
 var mnfbBtnId = 1;
@@ -27,6 +32,21 @@ var maxWidth = 854;
 var minWidth = 310;
 var resizing = false;
 var start;
+
+// Read from the storage to see if the settings exist.
+// If yes, populate the variables
+chrome.storage.sync.get([MINI_SCREEN_LAST_TOP, MINI_SCREEN_LAST_LEFT,
+                         MINI_SCREEN_LAST_HEIGHT, MINI_SCREEN_LAST_WIDTH], function(items)
+{
+    if (items[MINI_SCREEN_LAST_TOP])
+        miniScreenLastTop = items[MINI_SCREEN_LAST_TOP];
+    if (items[MINI_SCREEN_LAST_LEFT])
+        miniScreenLastLeft = items[MINI_SCREEN_LAST_LEFT];
+    if (items[MINI_SCREEN_LAST_HEIGHT])
+        miniScreenLastHeight = items[MINI_SCREEN_LAST_HEIGHT];
+    if (items[MINI_SCREEN_LAST_WIDTH])
+        miniScreenLastWidth = items[MINI_SCREEN_LAST_WIDTH];
+});
 
 $(document).ready(function() {
     // Preload images
