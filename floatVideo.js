@@ -229,10 +229,15 @@ $(document).ready(function() {
                                         <div class="mnfb-control-icons">\
                                             <button class="mnfb-size-button" id="mnfb-pin-button"><img class="mnfb-pin-img" src="https://raw.githubusercontent.com/jianweichuah/miniyoutube/master/images/pin.png" width="20px"/></button>\
                                             <label class="mnfb-pin-label">Save screen settings.</label>\
-                                            <button class="mnfb-size-button" id="mnfb-small-button">S</button>\
-                                            <button class="mnfb-size-button" id="mnfb-medium-button">M</button>\
-                                            <button class="mnfb-size-button" id="mnfb-large-button">L</button>\
-                                            <button class="mnfb-size-button" id="mnfb-extra-large-button">XL</button>\
+                                            <div id="resize-container">\
+                                                <button class="mnfb-size-button" id="mnfb-resize-button">&#10530;</button>\
+                                                <button class="mnfb-size-button" id="mnfb-small-button">S</button>\
+                                                <button class="mnfb-size-button" id="mnfb-medium-button">M</button>\
+                                                <button class="mnfb-size-button" id="mnfb-large-button">L</button>\
+                                                <button class="mnfb-size-button" id="mnfb-extra-large-button">XL</button>\
+                                            </div>\
+                                            <button class="mnfb-size-button" id="mnfb-pause-button">||</button>\
+                                            <button class="mnfb-size-button" id="mnfb-play-button">&#9654;</button>\
                                         </div>\
                                         <button class="mnfb-size-button" id="mnfb-close-button">X</button>\
                                         <div class="mnfb-progress-area">\
@@ -248,6 +253,9 @@ $(document).ready(function() {
         $('#mnfb-medium-button').click(handleTransitionMedium);
         $('#mnfb-large-button').click(handleTransitionLarge);
         $('#mnfb-extra-large-button').click(handleTransitionExtraLarge);
+
+        $('#mnfb-pause-button').click(handlePlayPause);
+        $('#mnfb-play-button').click(handlePlayPause);
         // Save the position and size of the screen if pin button is clicked
         $('#mnfb-pin-button').click(pinButtonClicked);
         $('#mnfb-close-button').click(closeButtonClicked);
@@ -321,6 +329,10 @@ $(document).ready(function() {
         $('.mnfb-progress-pointer').hide();
     }
 
+    function handlePlayPause(){
+        toggleVideo();
+    }
+
     function handleVideoProgress(e) {
         var clickedPositionX = e.offsetX;
         var totalWidth = $('.mnfb-progress-area').width();
@@ -388,10 +400,15 @@ $(document).ready(function() {
 
     function toggleVideo() {
         $vid = $('#mnfb-video').get(0);
-        if ($vid.paused)
+        if ($vid.paused){
+            $('#mnfb-play-button').hide();
+            $('#mnfb-pause-button').show();
             $vid.play();
-        else
+        }else{
+            $('#mnfb-play-button').show();
+            $('#mnfb-pause-button').hide();
             $vid.pause();
+        }
     }
 
     function closeButtonClicked() {
