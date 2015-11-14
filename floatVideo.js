@@ -319,10 +319,6 @@ $(document).ready(function() {
         $('.mnfb-progress-pointer').hide();
     }
 
-    function handlePlayPause(){
-        toggleVideo();
-    }
-
     function handleVideoProgress(e) {
         var clickedPositionX = e.offsetX;
         var totalWidth = $('.mnfb-progress-area').width();
