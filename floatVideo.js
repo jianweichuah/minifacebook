@@ -225,7 +225,7 @@ $(document).ready(function() {
         // Add resizers to the right corners of the div
         $('#minifacebook').append('<div>\
                                         <div class="resizer" id="mnfb-br"></div>\
-                                        <img class="resize-icon" src="https://raw.githubusercontent.com/jianweichuah/miniyoutube/master/brCorner.png" />\
+                                        <div class="resize-icon"></div>\
                                         <div class="mnfb-control-icons">\
                                             <button class="mnfb-size-button" id="mnfb-pin-button"><img class="mnfb-pin-img" src="https://raw.githubusercontent.com/jianweichuah/miniyoutube/master/images/pin.png" width="20px"/></button>\
                                             <label class="mnfb-pin-label">Save screen settings.</label>\
