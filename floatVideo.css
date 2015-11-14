@@ -165,6 +165,10 @@
   position:absolute;
   z-index: 1001;
   cursor: se-resize;
+  border-bottom: 2px solid black;
+  border-right: 2px solid black;
+  width: 30px;
+  height: 30px;
 }
 
 #mnfb-br {

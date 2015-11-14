@@ -228,7 +228,7 @@ $(document).ready(function() {
     function addVideoControls() {
         // Add resizers to the right corners of the div
         $('#minifacebook').append('<div class="resizer" id="mnfb-br"></div>\
-                                    <img class="resize-icon" src="https://raw.githubusercontent.com/jianweichuah/miniyoutube/master/brCorner.png" />\
+                                    <div class="resize-icon"></div>\
                                     <div class="mnfb-control-icons">\
                                         <button class="mnfb-size-button" id="mnfb-pin-button"><img class="mnfb-pin-img" src="https://raw.githubusercontent.com/jianweichuah/miniyoutube/master/images/pin.png" width="20px"/></button>\
                                         <label class="mnfb-pin-label">Save screen settings.</label>\
@@ -375,17 +375,24 @@ $(document).ready(function() {
         return false;
     }
 
+    function showPause(){
+        $(".mnfb-play-button-play").hide();
+        $(".mnfb-play-button-pause").show();
+    }
+
+    function showPlay(){
+        $(".mnfb-play-button-play").show();
+        $(".mnfb-play-button-pause").hide();
+    }
+
     function toggleVideo() {
         $vid = $('#mnfb-video').get(0);
-        if ($vid.paused) {
+        if ($vid.paused){
+            showPause();
             $vid.play();
-            $(".mnfb-play-button-play").hide();
-            $(".mnfb-play-button-pause").show();
-        }
-        else {
+        } else {
+            showPlay();
             $vid.pause();
-            $(".mnfb-play-button-play").show();
-            $(".mnfb-play-button-pause").hide();
         }
     }
 
@@ -458,6 +465,8 @@ $(document).ready(function() {
         $('.mnfb-progress-pointer').stop().animate({
             left: progressTotal - 5
         });
+        if(percent === 1)
+            showPlay();
     }
 
 
