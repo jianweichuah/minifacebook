@@ -77,7 +77,10 @@ $(document).ready(function() {
                    e.target.className === "mnfb-progress-area" ||
                    e.target.className === "mnfb-progress-wrap mnfb-progress" ||
                    e.target.className === "mnfb-progress-bar mnfb-progress" ||
-                   e.target.className === "mnfb-progress-pointer") {
+                   e.target.className === "mnfb-progress-pointer" ||
+                   e.target.className === "mnfb-play-button" ||
+                   e.target.className === "mnfb-play-button-play" ||
+                   e.target.className === "mnfb-play-button-pause") {
                     return false;
                 }
 
@@ -215,6 +218,7 @@ $(document).ready(function() {
         addVideoControls();
         // 9. Play the video
         $('#mnfb-video').get(0).play();
+        $(".mnfb-play-button-pause").show();
         // 10. Make minifacebook draggable
         $miniScreen.drags();
         // 11. Set floated to true
@@ -223,30 +227,27 @@ $(document).ready(function() {
 
     function addVideoControls() {
         // Add resizers to the right corners of the div
-        $('#minifacebook').append('<div>\
-                                        <div class="resizer" id="mnfb-br"></div>\
-                                        <div class="resize-icon"></div>\
-                                        <div class="mnfb-control-icons">\
-                                            <button class="mnfb-size-button" id="mnfb-pin-button"><img class="mnfb-pin-img" src="https://raw.githubusercontent.com/jianweichuah/miniyoutube/master/images/pin.png" width="20px"/></button>\
-                                            <label class="mnfb-pin-label">Save screen settings.</label>\
-                                            <div id="resize-container">\
-                                                <button class="mnfb-size-button" id="mnfb-resize-button">&#10530;</button>\
-                                                <button class="mnfb-size-button" id="mnfb-small-button">S</button>\
-                                                <button class="mnfb-size-button" id="mnfb-medium-button">M</button>\
-                                                <button class="mnfb-size-button" id="mnfb-large-button">L</button>\
-                                                <button class="mnfb-size-button" id="mnfb-extra-large-button">XL</button>\
-                                            </div>\
-                                            <button class="mnfb-size-button" id="mnfb-pause-button">||</button>\
-                                            <button class="mnfb-size-button" id="mnfb-play-button">&#9654;</button>\
+        $('#minifacebook').append('<div class="resizer" id="mnfb-br"></div>\
+                                    <div class="resize-icon"></div>\
+                                    <div class="mnfb-control-icons">\
+                                        <button class="mnfb-size-button" id="mnfb-pin-button"><img class="mnfb-pin-img" src="https://raw.githubusercontent.com/jianweichuah/miniyoutube/master/images/pin.png" width="20px"/></button>\
+                                        <label class="mnfb-pin-label">Save screen settings.</label>\
+                                        <button class="mnfb-size-button" id="mnfb-small-button">S</button>\
+                                        <button class="mnfb-size-button" id="mnfb-medium-button">M</button>\
+                                        <button class="mnfb-size-button" id="mnfb-large-button">L</button>\
+                                        <button class="mnfb-size-button" id="mnfb-extra-large-button">XL</button>\
+                                    </div>\
+                                    <div class="mnfb-play-button" id="mnfb-play-button">\
+                                        <div class="mnfb-play-button-play"></div>\
+                                        <div class="mnfb-play-button-pause"></div>\
+                                    </div>\
+                                    <button class="mnfb-size-button" id="mnfb-close-button">X</button>\
+                                    <div class="mnfb-progress-area">\
+                                        <div class="mnfb-progress-wrap mnfb-progress">\
+                                            <div class="mnfb-progress-bar mnfb-progress"></div>\
                                         </div>\
-                                        <button class="mnfb-size-button" id="mnfb-close-button">X</button>\
-                                        <div class="mnfb-progress-area">\
-                                            <div class="mnfb-progress-wrap mnfb-progress">\
-                                                <div class="mnfb-progress-bar mnfb-progress"></div>\
-                                            </div>\
-                                            <div class="mnfb-progress-pointer"></div>\
-                                        </div>\
-                                  </div>');
+                                        <div class="mnfb-progress-pointer"></div>\
+                                    </div>');
 
         // Add listeners for the controls
         $('#mnfb-small-button').click(handleTransitionSmall);
@@ -254,8 +255,8 @@ $(document).ready(function() {
         $('#mnfb-large-button').click(handleTransitionLarge);
         $('#mnfb-extra-large-button').click(handleTransitionExtraLarge);
 
-        $('#mnfb-pause-button').click(handlePlayPause);
-        $('#mnfb-play-button').click(handlePlayPause);
+        $('#mnfb-play-button').click(toggleVideo);
+
         // Save the position and size of the screen if pin button is clicked
         $('#mnfb-pin-button').click(pinButtonClicked);
         $('#mnfb-close-button').click(closeButtonClicked);
@@ -269,30 +270,10 @@ $(document).ready(function() {
 
     function addListeners() {
         // Modify clicking to differentiate long vs short clicks.
-        // Long click -> dragging. Short click -> pause/play
-        $('#minifacebook').on('mousedown', function(e) {
-            start = new Date().getTime();
-        });
-
         $('#minifacebook').on('mouseup', function(e) {
             // If resizing, stop it
             if (resizing) {
                 stopResize(e);
-                return false;
-            }
-
-            if (new Date().getTime() < (start + LONG_PRESS)) {
-                // If the click is on the controls, don't pause
-                if (e.target.className === "mnfb-size-button" ||
-                    e.target.className === "mnfb-pin-img" ||
-                    e.target.className === "mnfb-progress-area" ||
-                    e.target.className === "mnfb-progress-wrap mnfb-progress" ||
-                    e.target.className === "mnfb-progress-bar mnfb-progress" ||
-                    e.target.className === "mnfb-progress-pointer")
-                {
-                    return false;
-                }
-                toggleVideo();
             }
             return false;
         });
@@ -300,11 +281,13 @@ $(document).ready(function() {
         $('#minifacebook').on('mouseover', function(e) {
             $('.mnfb-control-icons').show();
             $('#mnfb-close-button').show();
+            $('.mnfb-play-button').show();
         });
 
         $('#minifacebook').on('mouseleave', function(e) {
             $('.mnfb-control-icons').hide();
             $('#mnfb-close-button').hide();
+            $('.mnfb-play-button').hide();
         });
 
         $('#minifacebook').click(function() {
@@ -399,13 +382,13 @@ $(document).ready(function() {
     }
 
     function showPause(){
-        $('#mnfb-play-button').hide();
-        $('#mnfb-pause-button').show();
+        $(".mnfb-play-button-play").hide();
+        $(".mnfb-play-button-pause").show();
     }
 
     function showPlay(){
-        $('#mnfb-play-button').show();
-        $('#mnfb-pause-button').hide();
+        $(".mnfb-play-button-play").show();
+        $(".mnfb-play-button-pause").hide();
     }
 
     function toggleVideo() {
@@ -413,7 +396,7 @@ $(document).ready(function() {
         if ($vid.paused){
             showPause();
             $vid.play();
-        }else{
+        } else {
             showPlay();
             $vid.pause();
         }
