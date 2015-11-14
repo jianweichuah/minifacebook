@@ -398,15 +398,23 @@ $(document).ready(function() {
         return false;
     }
 
+    function showPause(){
+        $('#mnfb-play-button').hide();
+        $('#mnfb-pause-button').show();
+    }
+
+    function showPlay(){
+        $('#mnfb-play-button').show();
+        $('#mnfb-pause-button').hide();
+    }
+
     function toggleVideo() {
         $vid = $('#mnfb-video').get(0);
         if ($vid.paused){
-            $('#mnfb-play-button').hide();
-            $('#mnfb-pause-button').show();
+            showPause();
             $vid.play();
         }else{
-            $('#mnfb-play-button').show();
-            $('#mnfb-pause-button').hide();
+            showPlay();
             $vid.pause();
         }
     }
@@ -480,6 +488,8 @@ $(document).ready(function() {
         $('.mnfb-progress-pointer').stop().animate({
             left: progressTotal - 5
         });
+        if(percent === 1)
+            showPlay();
     }
 
 
