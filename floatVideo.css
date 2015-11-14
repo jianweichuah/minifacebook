@@ -214,6 +214,22 @@
   color:#ffffff;
 }
 
+#resize-container .mnfb-size-button {
+    display: inline-block;
+}
+
+#resize-container .mnfb-size-button:not(:first-child){
+  display: none;
+}
+
+#resize-container:hover .mnfb-size-button:not(:first-child){
+  display: inline-block;
+}
+
+#mnfb-play-button{
+  display: none;
+}
+
 .mnfb-size-button img {
   vertical-align: middle;
 }

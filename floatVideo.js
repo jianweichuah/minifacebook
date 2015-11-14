@@ -254,7 +254,9 @@ $(document).ready(function() {
         $('#mnfb-medium-button').click(handleTransitionMedium);
         $('#mnfb-large-button').click(handleTransitionLarge);
         $('#mnfb-extra-large-button').click(handleTransitionExtraLarge);
+
         $('#mnfb-play-button').click(toggleVideo);
+
         // Save the position and size of the screen if pin button is clicked
         $('#mnfb-pin-button').click(pinButtonClicked);
         $('#mnfb-close-button').click(closeButtonClicked);
@@ -308,6 +310,10 @@ $(document).ready(function() {
         $('.mnfb-progress-wrap').height(1);
         $('.mnfb-progress-bar').height(1);
         $('.mnfb-progress-pointer').hide();
+    }
+
+    function handlePlayPause(){
+        toggleVideo();
     }
 
     function handleVideoProgress(e) {
