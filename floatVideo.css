@@ -1,3 +1,14 @@
+#minifacebook {
+  position: fixed;
+  left: 5px;
+  top: 55px;
+  width: 310px;
+  height: 175px;
+  z-index: 1000;
+  background-color: black;
+  box-shadow: 0 0 10px #000000;
+}
+
 .mnfb-play-button {
   margin-left: auto;
   margin-right: auto;
@@ -43,22 +54,22 @@
 }
 
 .mnfb-play-button-pause:before {
-  width: 8px;
-  height: 24px;
+  width: 7px;
+  height: 20px;
   background-color: #FFFFFF;
   position: absolute;
   content: "";
-  top: 13px;
+  top: 15px;
   left: 15px;
 }
 
 .mnfb-play-button-pause:after {
-  width: 8px;
-  height: 24px;
+  width: 7px;
+  height: 20px;
   background-color: #FFFFFF;
   position: absolute;
   content: "";
-  top: 13px;
+  top: 15px;
   right: 15px;
 }
 
@@ -135,16 +146,6 @@
   cursor: pointer;
   z-index: 1001;
   background-color: #3b5998;
-}
-
-#minifacebook {
-  position: fixed;
-  left: 5px;
-  top: 55px;
-  width: 310px;
-  height: 175px;
-  z-index: 1000;
-  background-color: black;
 }
 
 #mnfb-video {
