@@ -16,10 +16,12 @@ var MINI_SCREEN_LAST_HEIGHT = 'miniScreenLastHeight';
 var MINI_SCREEN_LAST_WIDTH = 'miniScreenLastWidth';
 
 var checkedVideos = {};
+var videoQueue = [];
 var mnfbBtnId = 1;
 
 // Handle dragging.
 var floated = false;
+var videoQueueEnabled = true;
 
 var originalHeight;
 var originalWidth;
@@ -164,16 +166,52 @@ $(document).ready(function() {
     });
 
     function floatVideo(event) {
-        // If there is already a video, do nothing
-        if (floated) {
-            return false;
-        }
+
         var clickedButton = event.target;
+
         // 1. Get the video url
         var originalVideo = $(clickedButton).siblings('video').get(0);
+        // 1.1 Get the video src.
+        var videoSrc = originalVideo.src;
+        if(videoSrc.match('blob:')){
+            var flashvars = originalVideo.getElementsByTagName('embed')[0].getAttribute('flashvars');
+            var params = JSON.parse(Util.getJsonFromUrl(flashvars).params);
+            // First set to hd_src
+            videoSrc = params.video_data.progressive[0].hd_src;
+            // If not available, then set to sd_src
+            if (!videoSrc)
+                videoSrc = params.video_data.progressive[0].sd_src;
+        }
+
+         // If there is already a video, add it to the queue
+        if (floated && videoQueueEnabled) {
+            // If there is already a video, add this video to the queue
+            var videoImageUrl = clickedButton.nextSibling.childNodes[0].style["backgroundImage"].slice(4,-1)
+            videoQueue.push(videoSrc);
+            // Show alert for video queued
+            // Show settings saved alert
+            $settingsSavedAlert = $('<div style="width: 100%">\
+                                        <div class="alert alert-info" role="alert">\
+                                            <img src="https://raw.githubusercontent.com/jianweichuah/minifacebook/master/icon16.png" height="10px">\
+                                            Mini Facebook: Video added to queue!\
+                                        </div>\
+                                     </div>');
+            $('body').prepend($settingsSavedAlert);
+            // Show it for 5 seconds, fade it out and remove it.
+            $settingsSavedAlert.show().delay(1000).fadeOut(100, function() {
+                $(this).remove();
+            });
+            return false;
+        }
+
         // 2. Pause the main video
         originalVideo.pause();
-        // 3. Create the mini facebook div
+        // 3. Float the video
+        floatVideoWithSource(videoSrc);
+    }
+
+    function floatVideoWithSource(videoSrc) {
+        // 1. Create the mini facebook div
         var $miniScreen = $('<div id="minifacebook"></div');
         // Put the screen back to its last position, if defined.
         // Else default to top right.
@@ -181,7 +219,6 @@ $(document).ready(function() {
         var miniScreenHeight = 175;
         var miniScreenLeft = $window.width() - 380;
         var miniScreenWidth = 310;
-        var videoSrc = originalVideo.src;
 
         if (miniScreenLastTop && miniScreenLastHeight && 
             miniScreenLastLeft && miniScreenLastWidth &&
@@ -199,17 +236,7 @@ $(document).ready(function() {
         $miniScreen.height(miniScreenHeight);
         $miniScreen.width(miniScreenWidth);
 
-        if(videoSrc.match('blob:')){
-            var flashvars = originalVideo.getElementsByTagName('embed')[0].getAttribute('flashvars');
-            var params = JSON.parse(Util.getJsonFromUrl(flashvars).params);
-            // First set to hd_src
-            videoSrc = params.video_data.progressive[0].hd_src;
-            // If not available, then set to sd_src
-            if (!videoSrc)
-                videoSrc = params.video_data.progressive[0].sd_src;
-        }
-
-        // 4. Create a video tag with the video url
+        // 3. Create a video tag with the video url
         $newVideo = $('<video>', {src: videoSrc, id: MINIFACEBOOK_VIDEO_ID});
 
         // Set the width and height of the video to fit the div
@@ -219,20 +246,20 @@ $(document).ready(function() {
         // Bind the time update event to the video
         $newVideo.bind('timeupdate', updateTime);
 
-        // 5. Append the video into the mini facebook div
+        // 4. Append the video into the mini facebook div
         $miniScreen.append($newVideo);
-        // 6. Append everything into the body tag
+        // 5. Append everything into the body tag
         $miniScreen.appendTo('body');
-        // 7. Add listeners to mini facebook
+        // 6. Add listeners to mini facebook
         addListeners();
-        // 8. Add video controls
+        // 7. Add video controls
         addVideoControls();
-        // 9. Play the video
+        // 8. Play the video
         $('#mnfb-video').get(0).play();
         $(".mnfb-play-button-pause").show();
-        // 10. Make minifacebook draggable
+        // 9. Make minifacebook draggable
         $miniScreen.drags();
-        // 11. Set floated to true
+        // 10. Set floated to true
         floated = true;
     }
 
@@ -270,7 +297,7 @@ $(document).ready(function() {
 
         // Save the position and size of the screen if pin button is clicked
         $('#mnfb-pin-button').click(pinButtonClicked);
-        $('#mnfb-close-button').click(closeButtonClicked);
+        $('#mnfb-close-button').click(removeFloatingScreen);
         // Add listener for the resizers
         $('.resizer').bind('mousedown.resizer', initResize);
         $('.resize-icon').bind('mousedown.resizer', initResize);
@@ -409,9 +436,15 @@ $(document).ready(function() {
         }
     }
 
-    function closeButtonClicked() {
+    function removeFloatingScreen() {
         $('#minifacebook').remove();
         floated = false;
+
+        if (videoQueueEnabled && videoQueue.length > 0) {
+            // Play the next video in the queue
+            var nextVideoSrc = videoQueue.shift();
+            floatVideoWithSource(nextVideoSrc);
+        }
     }
 
     function pinButtonClicked() {
@@ -478,8 +511,18 @@ $(document).ready(function() {
         $('.mnfb-progress-pointer').stop().animate({
             left: progressTotal - 5
         });
-        if(percent === 1)
-            showPlay();
+
+        // Current video finished playing
+        if (percent === 1) {
+            if (videoQueueEnabled && videoQueue.length > 0) {
+                // First save the current settings.
+                saveMiniFacebookSettings();
+                // Then remove the current floating scren
+                removeFloatingScreen();
+            } else {
+                showPlay();
+            }
+        }
     }
 
 
