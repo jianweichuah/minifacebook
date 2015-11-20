@@ -50,6 +50,17 @@ chrome.storage.sync.get([MINI_SCREEN_LAST_TOP, MINI_SCREEN_LAST_LEFT,
         miniScreenLastWidth = items[MINI_SCREEN_LAST_WIDTH];
 });
 
+// Update activation status
+getActivationStatus(updateActivationStatus);
+
+// Add a listener for the activation status
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+    if ("update_activation_status" in message) {
+        // 1. Update status
+        updateActivationStatus(message["update_activation_status"]);
+    }
+});
+
 $(document).ready(function() {
     // Preload images
     preloadImage("https://raw.githubusercontent.com/jianweichuah/miniyoutube/master/images/pin.png");
@@ -184,23 +195,31 @@ $(document).ready(function() {
         }
 
          // If there is already a video, add it to the queue
-        if (floated && videoQueueEnabled) {
-            // If there is already a video, add this video to the queue
-            var videoImageUrl = clickedButton.nextSibling.childNodes[0].style["backgroundImage"].slice(4,-1)
-            videoQueue.push(videoSrc);
-            // Show alert for video queued
-            // Show settings saved alert
-            $settingsSavedAlert = $('<div style="width: 100%">\
-                                        <div class="alert alert-info" role="alert">\
-                                            <img src="https://raw.githubusercontent.com/jianweichuah/minifacebook/master/icon16.png" height="10px">\
-                                            Mini Facebook: Video added to queue!\
-                                        </div>\
-                                     </div>');
-            $('body').prepend($settingsSavedAlert);
-            // Show it for 5 seconds, fade it out and remove it.
-            $settingsSavedAlert.show().delay(1000).fadeOut(100, function() {
-                $(this).remove();
-            });
+        if (floated) {
+            if (videoQueueEnabled) {
+                // If there is already a video, add this video to the queue
+                var videoImageUrl = clickedButton.nextSibling.childNodes[0].style["backgroundImage"].slice(4,-1);
+                // Send image of the queued video to background.js
+                chrome.runtime.sendMessage({"queue_video": videoImageUrl});
+
+                videoQueue.push(videoSrc);
+                // Update time - this will play this newly queued video if the current video is already finished
+                updateTime();
+                // Show alert for video queued
+                // Show settings saved alert
+                $settingsSavedAlert = $('<div style="width: 100%">\
+                                            <div class="alert alert-info" role="alert">\
+                                                <img src="https://raw.githubusercontent.com/jianweichuah/minifacebook/master/icon16.png" height="10px">\
+                                                Mini Facebook: Video added to queue!\
+                                            </div>\
+                                         </div>');
+                $('body').prepend($settingsSavedAlert);
+                // Show it for 5 seconds, fade it out and remove it.
+                $settingsSavedAlert.show().delay(1000).fadeOut(100, function() {
+                    $(this).remove();
+                });
+            }
+            // Else do nothing
             return false;
         }
 
@@ -440,11 +459,17 @@ $(document).ready(function() {
         $('#minifacebook').remove();
         floated = false;
 
-        if (videoQueueEnabled && videoQueue.length > 0) {
-            // Play the next video in the queue
-            var nextVideoSrc = videoQueue.shift();
-            floatVideoWithSource(nextVideoSrc);
+        if (videoQueue.length > 0) {
+            dequeueAndPlayNextVideo();
         }
+    }
+
+    function dequeueAndPlayNextVideo() {
+        // 1. Play the next video in the queue
+        var nextVideoSrc = videoQueue.shift();
+        floatVideoWithSource(nextVideoSrc);
+        // 2. Send message to dequeue video at the background
+        chrome.runtime.sendMessage({"dequeue_video": true});
     }
 
     function pinButtonClicked() {
@@ -514,7 +539,7 @@ $(document).ready(function() {
 
         // Current video finished playing
         if (percent === 1) {
-            if (videoQueueEnabled && videoQueue.length > 0) {
+            if (videoQueue.length > 0) {
                 // First save the current settings.
                 saveMiniFacebookSettings();
                 // Then remove the current floating scren
@@ -540,6 +565,21 @@ $(document).ready(function() {
         img.src=url;
     }
 });
+
+function getActivationStatus(callBack) {
+    chrome.runtime.sendMessage({"get_activation_status": true}, function(response) {
+        var activated = true;
+        console.log(response);
+        if (response) {
+            activated = response[0];
+        }
+        callBack(activated);
+    });
+}
+
+function updateActivationStatus(activated) {
+    videoQueueEnabled = activated;
+}
 
 var Util = {
     getJsonFromUrl: function(q) {
