@@ -53,7 +53,7 @@ chrome.storage.sync.get([MINI_SCREEN_LAST_TOP, MINI_SCREEN_LAST_LEFT,
 $(document).ready(function() {
     // Preload images
     preloadImage("https://raw.githubusercontent.com/jianweichuah/miniyoutube/master/images/pin.png");
-    
+
     var $window = $(window);
     var $document = $(document);
 
@@ -73,8 +73,8 @@ $(document).ready(function() {
 
             return $el.css('cursor', opt.cursor).on("mousedown", function(e) {
                 // If the clicked div is resizer, don't make it draggable.
-                if(e.target.className === "resizer" || 
-                   e.target.className === "mnfb-size-button" || 
+                if(e.target.className === "resizer" ||
+                   e.target.className === "mnfb-size-button" ||
                    e.target.className === "mnfb-pin-img" ||
                    e.target.className === "mnfb-progress-area" ||
                    e.target.className === "mnfb-progress-wrap mnfb-progress" ||
@@ -186,8 +186,10 @@ $(document).ready(function() {
          // If there is already a video, add it to the queue
         if (floated && videoQueueEnabled) {
             // If there is already a video, add this video to the queue
-            var videoImageUrl = clickedButton.nextSibling.childNodes[0].style["backgroundImage"].slice(4,-1)
+            // Image url commented out until needed.
+            // var videoImageUrl = clickedButton.nextSibling.childNodes[0].style["backgroundImage"].slice(4,-1)
             videoQueue.push(videoSrc);
+            updateTime();
             // Show alert for video queued
             // Show settings saved alert
             $settingsSavedAlert = $('<div style="width: 100%">\
@@ -220,7 +222,7 @@ $(document).ready(function() {
         var miniScreenLeft = $window.width() - 380;
         var miniScreenWidth = 310;
 
-        if (miniScreenLastTop && miniScreenLastHeight && 
+        if (miniScreenLastTop && miniScreenLastHeight &&
             miniScreenLastLeft && miniScreenLastWidth &&
             miniScreenLastLeft + miniScreenLastWidth <= $window.width() &&
             miniScreenLastTop + miniScreenLastHeight <= $window.height()) {
