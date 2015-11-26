@@ -22,6 +22,10 @@ var mnfbBtnId = 1;
 // Handle dragging.
 var floated = false;
 var videoQueueEnabled = true;
+// Replay - if enabled, will play the current video in a loop.
+// It's per video. So, if you enable it for the current video and it's removed,
+// the next video will start with it set to false.
+var replayEnabled = false;
 
 var originalHeight;
 var originalWidth;
@@ -281,7 +285,10 @@ $(document).ready(function() {
                                         <div class="mnfb-play-button-play"></div>\
                                         <div class="mnfb-play-button-pause"></div>\
                                     </div>\
-                                    <button class="mnfb-size-button" id="mnfb-close-button">X</button>\
+                                    <div class="mnfb-control-icons-right">\
+                                        <button class="mnfb-size-button" id="mnfb-close-button">X</button>\
+                                        <button class="mnfb-size-button" id="mnfb-replay-button">&#8635;</button>\
+                                    </div>\
                                     <div class="mnfb-progress-area">\
                                         <div class="mnfb-progress-wrap mnfb-progress">\
                                             <div class="mnfb-progress-bar mnfb-progress"></div>\
@@ -300,12 +307,22 @@ $(document).ready(function() {
         // Save the position and size of the screen if pin button is clicked
         $('#mnfb-pin-button').click(pinButtonClicked);
         $('#mnfb-close-button').click(removeFloatingScreen);
+        $('#mnfb-replay-button').click(toggleReplayStatus);
         // Add listener for the resizers
         $('.resizer').bind('mousedown.resizer', initResize);
         $('.resize-icon').bind('mousedown.resizer', initResize);
         // Add listener for the progress bar
         $('.mnfb-progress-area').hover(handleProgressHoverIn, handleProgressHoverOut);
         $('.mnfb-progress-area').click(handleVideoProgress);
+    }
+
+    function toggleReplayStatus() {
+        replayEnabled = !replayEnabled;
+        if (replayEnabled) {
+            $('#mnfb-replay-button').css("background-color", "#3b5998");
+        } else {
+            $('#mnfb-replay-button').css("background-color", "");
+        }
     }
 
     function addListeners() {
@@ -320,13 +337,13 @@ $(document).ready(function() {
 
         $('#minifacebook').on('mouseover', function(e) {
             $('.mnfb-control-icons').show();
-            $('#mnfb-close-button').show();
+            $('.mnfb-control-icons-right').show();
             $('.mnfb-play-button').show();
         });
 
         $('#minifacebook').on('mouseleave', function(e) {
             $('.mnfb-control-icons').hide();
-            $('#mnfb-close-button').hide();
+            $('.mnfb-control-icons-right').hide();
             $('.mnfb-play-button').hide();
         });
 
@@ -441,6 +458,7 @@ $(document).ready(function() {
     function removeFloatingScreen() {
         $('#minifacebook').remove();
         floated = false;
+        replayEnabled = false;
 
         if (videoQueueEnabled && videoQueue.length > 0) {
             // Play the next video in the queue
@@ -516,7 +534,10 @@ $(document).ready(function() {
 
         // Current video finished playing
         if (percent === 1) {
-            if (videoQueueEnabled && videoQueue.length > 0) {
+            if (replayEnabled) {
+                $video.currentTime = 0;
+                $video.play();
+            } else if (videoQueueEnabled && videoQueue.length > 0) {
                 // First save the current settings.
                 saveMiniFacebookSettings();
                 // Then remove the current floating scren
