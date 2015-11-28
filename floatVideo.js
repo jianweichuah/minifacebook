@@ -289,6 +289,11 @@ $(document).ready(function() {
                                         <button class="mnfb-size-button" id="mnfb-close-button">X</button>\
                                         <button class="mnfb-size-button" id="mnfb-replay-button">&#8635;</button>\
                                     </div>\
+                                    <div class="mnfb-progress-time" id="mnfb-progress-time">\
+                                        <span id="mnfb-progress-current-time"></span>\
+                                        /\
+                                        <span id="mnfb-progress-duration"></span>\
+                                    </div>\
                                     <div class="mnfb-progress-area">\
                                         <div class="mnfb-progress-wrap mnfb-progress">\
                                             <div class="mnfb-progress-bar mnfb-progress"></div>\
@@ -339,12 +344,14 @@ $(document).ready(function() {
             $('.mnfb-control-icons').show();
             $('.mnfb-control-icons-right').show();
             $('.mnfb-play-button').show();
+            $('#mnfb-progress-time').show();
         });
 
         $('#minifacebook').on('mouseleave', function(e) {
             $('.mnfb-control-icons').hide();
             $('.mnfb-control-icons-right').hide();
             $('.mnfb-play-button').hide();
+            $('#mnfb-progress-time').hide();
         });
 
         $('#minifacebook').click(function() {
@@ -532,6 +539,11 @@ $(document).ready(function() {
             left: progressTotal - 5
         });
 
+        // Update video duration
+        $('#mnfb-progress-current-time').html(convertTime(Math.floor($video.currentTime)));
+        if (!$('#mnfb-progress-duration').html())
+            $('#mnfb-progress-duration').html(convertTime(Math.floor($video.duration)));
+
         // Current video finished playing
         if (percent === 1) {
             if (replayEnabled) {
@@ -548,6 +560,38 @@ $(document).ready(function() {
         }
     }
 
+    function convertTime(timeInSeconds) {
+        var hours = Math.floor(timeInSeconds / 3600);
+        timeInSeconds = timeInSeconds - hours * 3600;
+        var minutes = Math.floor(timeInSeconds / 60);
+        var seconds = timeInSeconds - minutes * 60;
+
+        var timeStr = [];
+        // Only put in hours if it's not 0
+        if (hours > 0) {
+            timeStr.push(hours);
+        }
+        // If hours > 0 but minutes == 0, put 00
+        if (minutes > 0) {
+            var minuteStr = minutes;
+            if (hours > 0 && minutes < 10)
+                minuteStr = "0".concat(minutes);
+            timeStr.push(minuteStr);
+        } else {
+            timeStr.push("0");
+        }
+
+        if (seconds > 0) {
+            var secondStr = seconds;
+            if (seconds < 10)
+                secondStr = "0".concat(seconds);
+            timeStr.push(secondStr);
+        } else {
+            timeStr.push("00");
+        }
+
+        return timeStr.join(":");
+    }
 
     function resizeScreen(newWidth, newHeight) {
         if ($('#minifacebook').width() == newWidth) {

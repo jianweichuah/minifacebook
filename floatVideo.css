@@ -9,6 +9,28 @@
   box-shadow: 0 0 10px #000000;
 }
 
+#mnfb-progress-time {
+  background: rgba(23,35,34,.5);
+  opacity: 0.5;
+  border-radius: 0.5em;
+  color: #ffffff;
+  font-weight: bolder;
+  cursor: text;
+  padding: 3px 5px;
+
+  bottom: 5px;
+  left: 50%;
+  margin-left: -32px;
+  position: absolute;
+  z-index: 1001;
+  display: none;
+}
+
+#mnfb-progress-time:hover {
+  background-color: #3b5998;
+  opacity: 1;
+}
+
 .mnfb-play-button {
   margin-left: auto;
   margin-right: auto;
