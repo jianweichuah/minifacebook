@@ -234,6 +234,10 @@
   font-weight: bolder;
 }
 
+#mnfb-link-button {
+  border-radius: 50%;
+}
+
 .mnfb-size-button {
   display: block;
   margin-bottom: 3px;

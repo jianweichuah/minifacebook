@@ -86,7 +86,8 @@ $(document).ready(function() {
                    e.target.className === "mnfb-progress-pointer" ||
                    e.target.className === "mnfb-play-button" ||
                    e.target.className === "mnfb-play-button-play" ||
-                   e.target.className === "mnfb-play-button-pause") {
+                   e.target.className === "mnfb-play-button-pause" ||
+                   e.target.className === "mnfb-post-link-img") {
                     return false;
                 }
 
@@ -147,6 +148,11 @@ $(document).ready(function() {
                 // 2. Add id to the button
                 var currBtnId = 'mnfb-id-' + mnfbBtnId;
                 mnfbBtn.attr('id', currBtnId);
+                // 2.1 Add the post link to the button
+                var postLink = $currVideo.closest(".userContentWrapper").find(".timestampContent").closest("a").attr("href");
+                if (postLink) {
+                    mnfbBtn.attr('data-mnfb-postlink', postLink);
+                }
                 // 3. Attach the button to the video
                 $currVideo.after(mnfbBtn);
                 // 4. Add listeners
@@ -214,6 +220,17 @@ $(document).ready(function() {
         originalVideo.pause();
         // 3. Float the video
         floatVideoWithSource(videoSrc);
+        // 4. Add the post link, if exists
+        var postLink = clickedButton.getAttribute("data-mnfb-postlink");
+        if (postLink) {
+            $('#minifacebook').find(".mnfb-control-icons-right").append(
+              '<button class="mnfb-size-button" id="mnfb-link-button" data-mnfb-postlink="' + postLink + '">\
+                    <img class="mnfb-post-link-img" src="https://raw.githubusercontent.com/jianweichuah/minifacebook/master/images/link.png" width="15px"/>\
+              </button>'
+            );
+
+            $('#mnfb-link-button').click(handlePostLinkClicked);
+        }
     }
 
     function floatVideoWithSource(videoSrc) {
@@ -387,6 +404,17 @@ $(document).ready(function() {
         var video = $('#mnfb-video').get(0);
         video.currentTime = percent * video.duration;
         updateTime();
+    }
+
+    function handlePostLinkClicked(e) {
+        var postLinkButton = e.target;
+        // If the clicked element is the image, get the button
+        if (e.target.tagName === "IMG") {
+            postLinkButton = e.target.parentElement;
+        }
+        var postLink = postLinkButton.getAttribute("data-mnfb-postlink");
+        if (postLink)
+          window.location.href = postLink;
     }
 
     function initResize(e) {
