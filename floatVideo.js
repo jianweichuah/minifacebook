@@ -186,11 +186,12 @@ $(document).ready(function() {
         if(videoSrc.match('blob:')){
             var flashvars = originalVideo.getElementsByTagName('embed')[0].getAttribute('flashvars');
             var params = JSON.parse(Util.getJsonFromUrl(flashvars).params);
+            var videoData = params.video_data.progressive;
             // First set to hd_src
-            videoSrc = params.video_data.progressive[0].hd_src;
+            videoSrc = videoData.hd_src;
             // If not available, then set to sd_src
             if (!videoSrc)
-                videoSrc = params.video_data.progressive[0].sd_src;
+                videoSrc = videoData.sd_src;
         }
 
          // If there is already a video, add it to the queue
